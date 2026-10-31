@@ -14,5 +14,6 @@ for old, new in swaps:
     if old not in src:
         sys.exit(f"build.py: expected text not found: {old}")
     src = src.replace(old, new)
+src = src.rstrip() + "\n"  # normalize the ending so rebuilds of the same page are identical
 open("index.html", "w", encoding="utf-8").write(src)
 print("wrote index.html")
