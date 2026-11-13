@@ -7,6 +7,7 @@ The movie library for Elmer's home theater: https://hart11b.github.io/Elmers-the
 1. Open **https://github.com/hart11b/Elmers-theater/edit/main/add-movies.csv** (bookmark this on your phone).
 2. Add a line at the bottom: `Title, Year, Format, Location`, e.g. `M3GAN, 2022, 4K, Kaleidescape`.
    Only the title is required. Add `, tv` at the end for a TV series.
+   To say which format lives where, write it as `format@location`, e.g. `Moneyball, 2011, Digital@Amazon/HD@Kaleidescape`; the site then shows "Digital · Amazon" and "HD · Kaleidescape".
 3. Tap **Commit changes…**, then **Commit changes** again.
 
 About a minute later GitHub looks it up on TMDB, adds the poster, rating, runtime, director, genres and a one-line synopsis, removes the line from the list, and updates the site. Anything it can't find stays in the list marked `# NOT FOUND`. Fix the spelling or add the year and commit again.

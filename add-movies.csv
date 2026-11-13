@@ -1,6 +1,7 @@
 # Add movies here, one per line: Title, Year, Format, Location, Type
 # Only Title is required. Year helps TMDB find the right one.
 # Format: 4K, Blu-ray, DVD, HD, SD or Digital (default 4K). Use / for more than one, e.g. 4K/Digital
+# To say where each copy lives, use format@location, e.g. Digital@Amazon/HD@Kaleidescape
 # Location: Kaleidescape, Binder, Original case, Amazon, iTunes, Movies Anywhere or Fandango (default Kaleidescape)
 # Type: movie or tv (default movie)
 # Example: M3GAN, 2022, 4K, Kaleidescape

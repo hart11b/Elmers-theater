@@ -46,6 +46,7 @@ LANGUAGES = {"ko": "Korean", "ja": "Japanese", "de": "German", "fr": "French",
 HEADER = """# Add movies here, one per line: Title, Year, Format, Location, Type
 # Only Title is required. Year helps TMDB find the right one.
 # Format: 4K, Blu-ray, DVD, HD, SD or Digital (default 4K). Use / for more than one, e.g. 4K/Digital
+# To say where each copy lives, use format@location, e.g. Digital@Amazon/HD@Kaleidescape
 # Location: Kaleidescape, Binder, Original case, Amazon, iTunes, Movies Anywhere or Fandango (default Kaleidescape)
 # Type: movie or tv (default movie)
 # Example: M3GAN, 2022, 4K, Kaleidescape
@@ -109,6 +110,37 @@ def parse_list(value, allowed, default):
     return picked or [default]
 
 
+def parse_copies(fmt_cell, loc_cell):
+    """Work out formats, locations and (optionally) which format lives where.
+
+    Plain:   "4K/Digital" with a Location column     -> separate lists, as before.
+    Paired:  "Digital@Amazon/HD@Kaleidescape"        -> also records each copy's own location,
+    so the site can show "Digital · Amazon" and "HD · Kaleidescape".
+    """
+    items = [v.strip() for v in re.split(r"[/;|]", fmt_cell or "") if v.strip()]
+    if not any("@" in i for i in items):
+        return parse_list(fmt_cell, FORMATS, "4K"), parse_list(loc_cell, LOCATIONS, "Kaleidescape"), []
+    fmt_lookup = {a.lower(): a for a in FORMATS}
+    loc_lookup = {a.lower(): a for a in LOCATIONS}
+    default_loc = parse_list(loc_cell, LOCATIONS, "Kaleidescape")[0]
+    fmts, locs, own = [], [], []
+    for item in items:
+        f, _, l = item.partition("@")
+        f = fmt_lookup.get(f.strip().lower())
+        l = loc_lookup.get(l.strip().lower()) or default_loc
+        if not f:
+            continue
+        if f not in fmts:
+            fmts.append(f)
+        if l not in locs:
+            locs.append(l)
+        if [f, l] not in own:
+            own.append([f, l])
+    if not own:
+        return parse_list("", FORMATS, "4K"), parse_list(loc_cell, LOCATIONS, "Kaleidescape"), []
+    return fmts, locs, own
+
+
 def lookup(title, year, kind):
     search = tmdb(f"/search/{kind}", query=title,
                   **({"year" if kind == "movie" else "first_air_date_year": year} if year else {}))
@@ -136,16 +168,19 @@ def build_entry(row, details, kind, new_id):
     lang = LANGUAGES.get(details.get("original_language", "en"), "")
     if lang and "International" not in g:
         g.append("International")
+    fmt, loc, own = parse_copies(row["format"], row["location"])
     entry = {
         "t": title, "y": int(date[:4]) if date[:4].isdigit() else (row["year"] or None),
         "r": us_rating(details, kind), "rt": runtime, "g": g, "d": director,
         "s": one_sentence(details.get("overview")),
-        "fmt": parse_list(row["format"], FORMATS, "4K"), "hdr": None,
-        "loc": parse_list(row["location"], LOCATIONS, "Kaleidescape"),
+        "fmt": fmt, "hdr": None,
+        "loc": loc,
         "n": 1, "ed": [], "k": kind, "src": [row["title"]], "id": new_id, "nd": 1,
     }
     if lang:
         entry["lang"] = lang
+    if own:
+        entry["own"] = own
     return entry
 
 
