@@ -156,6 +156,7 @@ select{background:var(--surface);border:1px solid var(--line);border-radius:999p
 .ferr{color:var(--accent);font-size:13px;align-self:center}
 .trow{display:flex;gap:8px;align-items:center}.trow input{flex:1;min-width:0}.trow .btn{flex:none}
 .btn:disabled{opacity:.5;cursor:default}
+a.btn{display:inline-flex;align-items:center;text-decoration:none;color:inherit}
 
 /* stats */
 .stats{padding-block:26px;display:flex;flex-direction:column;gap:30px}
@@ -483,6 +484,7 @@ function openSheet(id,o={}){
       <div class="acts">
         <button class="btn" type="button" id="bf" aria-pressed="${fav.has(k)}">★ Favorite</button>
         <button class="btn" type="button" id="bs" aria-pressed="${seen.has(k)}">✓ Watched</button>
+        ${m.k==='music'?'':`<a class="btn" id="brt" href="https://www.rottentomatoes.com/search?search=${encodeURIComponent(m.t)}" target="_blank" rel="noopener">🍅 Rotten Tomatoes</a>`}
         ${isOwner?'<button class="btn" type="button" id="be">Edit</button>':''}
         <span class="nav"><button class="btn" type="button" id="bp" aria-label="Previous title">←</button><button class="btn" type="button" id="bn" aria-label="Next title">→</button></span>
       </div>
