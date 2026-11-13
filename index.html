@@ -157,6 +157,13 @@ select{background:var(--surface);border:1px solid var(--line);border-radius:999p
 .trow{display:flex;gap:8px;align-items:center}.trow input{flex:1;min-width:0}.trow .btn{flex:none}
 .btn:disabled{opacity:.5;cursor:default}
 a.btn{display:inline-flex;align-items:center;text-decoration:none;color:inherit}
+.rts{display:inline-flex;gap:18px;align-items:center;padding:8px 14px;border:1px solid var(--line);border-radius:10px;background:var(--surface2);text-decoration:none;color:var(--fg);margin:2px 0 14px}
+.rts:hover{border-color:var(--brass)}
+.rts .sc{display:flex;align-items:center;gap:8px;font:600 20px var(--body)}
+.rts .sc small{display:block;font:500 10px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);line-height:1.2}
+.rts svg,.rtm svg{flex:none}
+.rtm{display:flex;gap:10px;align-items:center;font:500 12px var(--mono);color:var(--muted)}
+.rtm span{display:inline-flex;align-items:center;gap:4px}
 
 /* stats */
 .stats{padding-block:26px;display:flex;flex-direction:column;gap:30px}
@@ -262,6 +269,15 @@ const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const store={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 const keyOf=m=>m.t+'|'+(m.y||'');
+/* Rotten Tomatoes scores: 'Title|Year':[critics %, audience %]. Titles without an entry show a plain link instead. */
+const RT={"1917|2019":[88,88]};
+const rtUrl=m=>'https://www.rottentomatoes.com/search?search='+encodeURIComponent(m.t);
+const rtTom=(v,s)=>v>=60?`<svg width="${s}" height="${s}" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13.5" r="9" fill="#fa320a"/><path d="M12 4.5c-1 1.6-2.6 2-4.2 1.6 1.2 1.2 2.2 1.4 4.2 1 2-.4 3.4-.2 4.4-1.4-1.6.4-3-.2-4.4-1.2z" fill="#3a9d23"/></svg>`:`<svg width="${s}" height="${s}" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.4 4.2 4.8-.8-1.6 4.6 4 2.8-4.8 1.6.4 4.8-4-2.6-3.8 3.2-.8-4.8-4.8-.4 3.2-3.8-2.6-4 4.8.8z" fill="#6fb43f"/></svg>`;
+const rtPop=(v,s)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="7" r="3.2" fill="#fff3c4"/><circle cx="13" cy="5.6" r="3.4" fill="#ffe28a"/><circle cx="17" cy="8" r="3" fill="#fff3c4"/><path d="M5 10h14l-1.6 12H6.6z" fill="${v>=60?'#e5283a':'#6fb43f'}"/><path d="M9.4 10l.5 12M14.6 10l-.5 12" stroke="#fff" stroke-width="1.4" opacity=".85"/></svg>`;
+function rtBlock(m){const r=RT[keyOf(m)];if(!r||m.k==='music')return '';
+  const [c,a]=r;
+  return `<a class="rts" id="brt" href="${rtUrl(m)}" target="_blank" rel="noopener" aria-label="Rotten Tomatoes: critics ${c} percent, audience ${a} percent. Opens Rotten Tomatoes.">${c!=null?`<span class="sc">${rtTom(c,30)}<span>${c}%<small>Critics</small></span></span>`:''}${a!=null?`<span class="sc">${rtPop(a,30)}<span>${a}%<small>Audience</small></span></span>`:''}</a>`}
+function rtMini(m){const r=RT[keyOf(m)];if(!r)return '';return `<span class="rtm" title="Rotten Tomatoes: critics / audience">${r[0]!=null?`<span>${rtTom(r[0],14)}${r[0]}%</span>`:''}${r[1]!=null?`<span>${rtPop(r[1],14)}${r[1]}%</span>`:''}</span>`}
 let fav=new Set(store.get('sr.fav',[])), seen=new Set(store.get('sr.seen',[]));
 const S={q:'',kind:'all',fmt:new Set(),loc:'',genre:'',rating:'',decade:'',sort:'title',view:store.get('sr.view','grid'),fam:false,foreign:false,nonude:false,unseen:false,favs:false};
 
@@ -366,7 +382,7 @@ function render(){
   if(S.view==='list'){
     out.innerHTML='<div class="list">'+current.map(m=>`<button class="row" type="button" data-id="${m.id}">${poster(m,{mini:true,bare:true,noDim:true})}<span class="t"><b>${esc(m.t)}</b><span>${[m.y,m.r,runtime(m.rt),m.g.slice(0,2).join(', ')].filter(Boolean).join(' · ')}</span></span><span class="tags">${tagsHtml(m,'list')}</span></button>`).join('')+'</div>';
   }else{
-    out.innerHTML='<div class="grid">'+current.map(m=>`<button class="card" type="button" data-id="${m.id}" aria-label="${esc(m.t)}${m.y?' ('+m.y+')':''}">${poster(m)}<span class="cmeta"><b>${esc(m.t)}</b><span>${[m.y,runtime(m.rt)].filter(Boolean).join(' · ')||(m.k==='tv'?'Series':'')}</span></span></button>`).join('')+'</div>';
+    out.innerHTML='<div class="grid">'+current.map(m=>`<button class="card" type="button" data-id="${m.id}" aria-label="${esc(m.t)}${m.y?' ('+m.y+')':''}">${poster(m)}<span class="cmeta"><b>${esc(m.t)}</b><span>${[m.y,runtime(m.rt)].filter(Boolean).join(' · ')||(m.k==='tv'?'Series':'')}</span>${rtMini(m)}</span></button>`).join('')+'</div>';
   }
 }
 $('#out').addEventListener('click',e=>{const b=e.target.closest('[data-id]');if(b)openSheet(+b.dataset.id,{from:b})});
@@ -474,6 +490,7 @@ function openSheet(id,o={}){
       <div class="meta">${m.y?`<span>${m.y}</span>`:''}${m.r?`<span class="rt">${esc(m.r)}</span>`:''}${m.rt?`<span>${runtime(m.rt)}</span>`:''}<span>${m.k==='tv'?'Series':m.k==='music'?'Music':'Film'}</span>${m.lang?`<span>${esc(m.lang)}-language</span>`:''}<span title="From general knowledge, not verified">${m.nd===0?'No nudity expected':m.nd===2?'Contains nudity':'Nudity unconfirmed'}</span></div>
       <h2>${esc(m.t)}</h2>
       <div class="gen">${m.g.map(g=>`<span class="tag">${esc(g)}</span>`).join('')}</div>
+      ${rtBlock(m)}
       <p class="syn">${esc(m.s)}</p>
       ${m.d?`<div class="dir">${person} <b>${esc(m.d)}</b></div>`:''}
       <div class="own"><h3>In your collection</h3>
@@ -484,7 +501,7 @@ function openSheet(id,o={}){
       <div class="acts">
         <button class="btn" type="button" id="bf" aria-pressed="${fav.has(k)}">★ Favorite</button>
         <button class="btn" type="button" id="bs" aria-pressed="${seen.has(k)}">✓ Watched</button>
-        ${m.k==='music'?'':`<a class="btn" id="brt" href="https://www.rottentomatoes.com/search?search=${encodeURIComponent(m.t)}" target="_blank" rel="noopener">🍅 Rotten Tomatoes</a>`}
+        ${m.k==='music'||RT[keyOf(m)]?'':`<a class="btn" id="brt2" href="https://www.rottentomatoes.com/search?search=${encodeURIComponent(m.t)}" target="_blank" rel="noopener">🍅 Rotten Tomatoes</a>`}
         ${isOwner?'<button class="btn" type="button" id="be">Edit</button>':''}
         <span class="nav"><button class="btn" type="button" id="bp" aria-label="Previous title">←</button><button class="btn" type="button" id="bn" aria-label="Next title">→</button></span>
       </div>
